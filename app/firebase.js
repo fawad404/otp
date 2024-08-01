@@ -1,12 +1,12 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 const firebaseConfig = {
-  apiKey: "AIzaSyCykKqThDkClC9kYbaYqF26ieZNVZtRPeQ",
-  authDomain: "phone-auth-38815.firebaseapp.com",
-  projectId: "phone-auth-38815",
-  storageBucket: "phone-auth-38815.appspot.com",
-  messagingSenderId: "147673693785",
-  appId: "1:147673693785:web:3ff572e78e421478d27b48"
+  apiKey: "AIzaSyCwZOeh_ohz9bysr7VhKbBUnR4PP330S-E",
+  authDomain: "otp-verificaiton-c345d.firebaseapp.com",
+  projectId: "otp-verificaiton-c345d",
+  storageBucket: "otp-verificaiton-c345d.appspot.com",
+  messagingSenderId: "333081282673",
+  appId: "1:333081282673:web:4cd0ba1f1251482eecf3d0"
 };
 
 // Initialize Firebase
