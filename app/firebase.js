@@ -1,6 +1,5 @@
-
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from 'firebase/auth'
+import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
 const firebaseConfig = {
   apiKey: "AIzaSyCykKqThDkClC9kYbaYqF26ieZNVZtRPeQ",
   authDomain: "phone-auth-38815.firebaseapp.com",
@@ -11,7 +10,6 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-const auth = getAuth(app);
-auth.useDeviceLanguage();
-export { auth };
+const app = initializeApp(firebaseConfig);
+
+export const auth = getAuth(app);

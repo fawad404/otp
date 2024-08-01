@@ -1,128 +1,90 @@
+// components/PhoneAuth.js
+
 "use client"
-import { auth } from "../app/firebase"
-import {
-    RecaptchaVerifier,
-    signInWithPhoneNumber,
-} from "firebase/auth"
-import React, {FormEvent, useEffect, useState, useTransition } from "react";
-import {
-    InputOTP,
-    InputOTPGroup,
-    InputOTPSeparator,
-    InputOTPSlot,
-} from "@/components/ui/input-otp"
-import { Input } from "@/components/ui/input";
-import { Button } from "./ui/button";
-import { useRouter } from "next/navigation";
+import React, { useState } from 'react';
+import { auth } from '../app/firebase';
+import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 
 const OtpLogin = () => {
-    const router = useRouter();
-    const [phoneNumber, setPhoneNumber] = useState("");
-    const [otp, setOtp] = useState("");
-    const [error, setError] = useState(null);
-    const [success, setSuccess] = useState("");
-    
-    const [recaptchaVerifier, setRecaptchaVerifier] = useState(null);
-    const [confirmationResult, setConfirmationResult] = useState(null);
-    const [isPending, startTransition] = useTransition();
-    const [resendCountdown, setResendCountdown] = useState(0);
+  const [phone, setPhone] = useState('+91');
+  const [hasFilled, setHasFilled] = useState(false);
+  const [otp, setOtp] = useState('');
 
-    useEffect(() => {
-        let timer;
-        if (resendCountdown > 0) {
-          timer = setTimeout(() => setResendCountdown(resendCountdown - 1), 1000);
-        }
-        return () => clearTimeout(timer);
-      }, [resendCountdown]);
+  const generateRecaptcha = () => {
+    window.recaptchaVerifier = new RecaptchaVerifier('recaptcha', {
+      'size': 'invisible',
+      'callback': (response) => {
+        // reCAPTCHA solved, allow signInWithPhoneNumber.
+      }
+    }, auth);
+  }
 
+  const handleSend = (event) => {
+    event.preventDefault();
+    setHasFilled(true);
+    generateRecaptcha();
+    let appVerifier = window.recaptchaVerifier;
+    signInWithPhoneNumber(auth, phone, appVerifier)
+      .then((confirmationResult) => {
+        window.confirmationResult = confirmationResult;
+      }).catch((error) => {
+        console.error(error);
+      });
+  }
+  
+  const verifyOtp = (event) => {
+    let otp = event.target.value;
+    setOtp(otp);
 
-      useEffect(() => {
-        const recaptchaVerifier = new RecaptchaVerifier(
-          auth,
-          "recaptcha-container",
-          {
-            size: "invisible"
-          }
-        );
-      
-        setRecaptchaVerifier(recaptchaVerifier);
-      
-        return () => {
-          recaptchaVerifier.clear();
-        };
-      }, [auth]);
+    if (otp.length === 6) {
+      let confirmationResult = window.confirmationResult;
+      confirmationResult.confirm(otp).then((result) => {
+        let user = result.user;
+        console.log(user);
+        alert('User signed in successfully');
+      }).catch((error) => {
+        alert('User couldn\'t sign in (bad verification code?)');
+      });
+    }
+  }
 
-      const requestOtp = async(e) => {
-        e.preventDefault();
-
-        setResendCountdown(60);
-
-        startTransition(async () => {
-            setError("");
-
-            if(!recaptchaVerifier) {
-                return setError("RecaptchaVerifier is not initialized.");
-            }
-            try {
-                const confirmationResult = await signInWithPhoneNumber(
-                    auth,
-                    phoneNumber,
-                    recaptchaVerifier
-                );
-
-                setConfirmationResult(confirmationResult);
-                setSuccess("OTP sent successfully.");
-            } catch (error) {
-                setResendCountdown(0);
-
-                if(error.code === "auth/invalid-phone-number") {
-                    setError("Invalid phone number. Please check the number.");
-                } else if (error.code === "auth/too-many-requests"){
-                    setError("Too many requests. Please try again later.");
-                }else{
-                    setError("Failed to send OTP. Please try again.")
-                }
-            }
-        });
-      };
   return (
-      
-      <div>
-        {!confirmationResult && (
-            <form onSubmit={requestOtp}>
-                <Input
-                    className="text-black"
-                    type="tel"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-
-                />
-                <p className="text-xs text-gray-400 mt-2">
-                    Please enter your number with the country code (i.e. +44 for UK)</p>
-            </form>
-        )}
-
-        <Button
-            disabled={!phoneNumber || isPending || resendCountdown >0}
-            onClick={(e) => requestOtp(e)}
-            className="mt-5 text-gray-800" 
-            >
-            {resendCountdown > 0
-                ? `Resend OTP in ${resendCountdown}`
-                : isPending
-                ? "Sending OTP"
-                : "Send OTP"
-            }</Button>
-        <div className="p-10 text-center">
-            {error && <p className="text-red-500">{error}</p>}
-            {success && <p className="text-green-500">{success}</p>}
-        </div>
-
-        <div id="recaptcha-container" />
-
-       
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <div className="w-full max-w-md p-6 bg-white shadow-lg rounded-lg">
+        <h1 className="text-2xl font-bold mb-4 text-center">
+          {hasFilled ? 'Enter the OTP' : 'Enter your phone number'}
+        </h1>
+        <form onSubmit={handleSend}>
+          {!hasFilled ? (
+            <>
+              <input
+                type="text"
+                className="w-full p-3 border border-gray-300 rounded mb-4"
+                placeholder="Phone Number"
+                value={phone}
+                onChange={(event) => setPhone(event.target.value)}
+              />
+              <button
+                type="submit"
+                className="w-full py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                Send Code
+              </button>
+            </>
+          ) : (
+            <input
+              type="text"
+              className="w-full p-3 border border-gray-300 rounded"
+              placeholder="OTP"
+              value={otp}
+              onChange={verifyOtp}
+            />
+          )}
+        </form>
+      </div>
+      <div id="recaptcha"></div>
     </div>
-  )
+  );
 }
 
-export default OtpLogin
+export default OtpLogin;
