@@ -11,12 +11,13 @@ const OtpLogin = () => {
   const [otp, setOtp] = useState('');
 
   const generateRecaptcha = () => {
-    window.recaptchaVerifier = new RecaptchaVerifier('recaptcha', {
+
+    window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha', {
       'size': 'invisible',
-      'callback': (response) => {
-        // reCAPTCHA solved, allow signInWithPhoneNumber.
-      }
-    }, auth);
+      callback: () => {
+        console.log('recaptcha resolved..')
+    }
+    });
   }
 
   const handleSend = (event) => {
